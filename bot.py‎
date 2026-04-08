@@ -1,41 +1,42 @@
 import os
+import asyncio
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, ContextTypes
 
-# Get token from Render environment
-TOKEN = os.getenv("8710003231:AAEES5eEQ5J5wnNpW3omgD3Ja1_OEs-cE5M")
+# ---------- Replace with your own bot token ----------
+# Get it from @BotFather on Telegram
+TOKEN = "8710003231:AAEES5eEQ5J5wnNpW3omgD3Ja1_OEs-cE5M"
+# -----------------------------------------------------
 
-if not TOKEN:
-    raise ValueError("BOT_TOKEN is missing! Add it in Render.")
+# The welcome message in Hebrew
+WELCOME_MESSAGE = (
+    "ברוכים הבאים 👋\n\n"
+    "תודה שפנית אלינו!\n"
+    "אנחנו כאן כדי לעזור לך למצוא את הפתרון המתאים לצרכים שלך.\n\n"
+    "אתה יכול:\n"
+    "• לשאול כל שאלה\n"
+    "• לקבל מידע נוסף\n"
+    "• לבצע הזמנה או לבקש תמיכה\n\n"
+    "התחיל כאן:\n"
+    "https://t.me/m/lreqLDxBYjA0\n\n"
+    "או פשוט לשלוח הודעה - נענה בקרוב ✅"
+)
 
-WELCOME_MESSAGE = """ברוכים הבאים 👋
-
-תודה שפנית אלינו!
-אנחנו כאן כדי לעזור לך למצוא את הפתרון המתאים לצרכים שלך.
-
-אתה יכול:
-• לשאול כל שאלה
-• לקבל מידע נוסף
-• לבצע הזמנה או לבקש תמיכה
-
-התחיל כאן:
-https://t.me/m/lreqLDxBYjA0
-
-או פשוט לשלוח הודעה - נענה בקרוב ✅
-"""
-
-# When user sends /start
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    print("User clicked start")
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Send the welcome message when the /start command is issued."""
     await update.message.reply_text(WELCOME_MESSAGE)
 
-def main():
-    app = ApplicationBuilder().token(TOKEN).build()
+def main() -> None:
+    """Start the bot."""
+    # Create the Application
+    app = Application.builder().token(TOKEN).build()
 
+    # Register the /start command handler
     app.add_handler(CommandHandler("start", start))
 
-    print("Bot is running...")
-    app.run_polling(drop_pending_updates=True)
+    # Start polling (listening for updates)
+    print("Bot is running... Press Ctrl+C to stop.")
+    app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
     main()
