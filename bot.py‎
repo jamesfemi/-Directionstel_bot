@@ -6,7 +6,7 @@ bot = telebot.TeleBot(TOKEN)
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    welcome_text = """ברוכים הבאים 👋
+    welcome_text = """ ברוכים הבאים 👋
 
 תודה שפנית אלינו!
 אנחנו כאן כדי לעזור לך למצוא את הפתרון המתאים לצרכים שלך.
