@@ -1,39 +1,71 @@
 import os
-import asyncio
-from dotenv import load_dotenv
+import logging
 from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-# Load environment variables from .env file (for local development)
-load_dotenv()
-
-# Get the token from environment variable
-TOKEN = os.getenv("BOT_TOKEN")
-
-if not TOKEN:
-    raise ValueError("No BOT_TOKEN found. Set the BOT_TOKEN environment variable.")
-
-WELCOME_MESSAGE = (
-    "ברוכים הבאים 👋\n\n"
-    "תודה שפנית אלינו!\n"
-    "אנחנו כאן כדי לעזור לך למצוא את הפתרון המתאים לצרכים שלך.\n\n"
-    "אתה יכול:\n"
-    "• לשאול כל שאלה\n"
-    "• לקבל מידע נוסף\n"
-    "• לבצע הזמנה או לבקש תמיכה\n\n"
-    "התחיל כאן:\n"
-    "https://t.me/m/lreqLDxBYjA0\n\n"
-    "או פשוט לשלוח הודעה - נענה בקרוב ✅"
+# Enable logging
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
 )
+logger = logging.getLogger(__name__)
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+# Your welcome message
+WELCOME_MESSAGE = """ברוכים הבאים 👋
+
+תודה שפנית אלינו!
+אנחנו כאן כדי לעזור לך למצוא את הפתרון המתאים לצרכים שלך.
+
+אתה יכול:
+• לשאול כל שאלה
+• לקבל מידע נוסף
+• לבצע הזמנה או לבקש תמיכה
+
+התחיל כאן:
+https://t.me/m/lreqLDxBYjA0
+
+או פשוט לשלוח הודעה - נענה בקרוב ✅"""
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Send welcome message when /start command is issued."""
     await update.message.reply_text(WELCOME_MESSAGE)
 
-def main():
-    app = Application.builder().token(TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    print("Bot is running...")
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Send help message."""
+    await update.message.reply_text("שלח /start כדי לראות את הודעת הפתיחה מחדש")
 
-if __name__ == "__main__":
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle regular messages."""
+    # You can customize this response
+    await update.message.reply_text("תודה על הודעתך! נענה בהקדם האפשרי. ✅")
+
+async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Log errors."""
+    logger.error(f"Update {update} caused error {context.error}")
+
+def main():
+    """Start the bot."""
+    # Get token from environment variable
+    token = os.getenv('TELEGRAM_BOT_TOKEN')
+    
+    if not token:
+        logger.error("No token found! Set TELEGRAM_BOT_TOKEN environment variable.")
+        return
+    
+    # Create application
+    application = Application.builder().token(token).build()
+    
+    # Add handlers
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    
+    # Register error handler
+    application.add_error_handler(error_handler)
+    
+    # Start polling
+    logger.info("Bot is starting...")
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
+
+if __name__ == '__main__':
     main()
