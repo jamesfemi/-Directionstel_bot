@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Telegram Welcome Bot for Render Background Worker
-Sends a custom Hebrew welcome message to all users
 """
 
 import os
@@ -16,14 +15,14 @@ from telegram.ext import (
     ContextTypes,
 )
 
-# Configure logging - CRITICAL: Must see what's happening
+# Configure logging
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.DEBUG,  # Changed to DEBUG to see all messages
+    level=logging.INFO,
 )
 logger = logging.getLogger(__name__)
 
-# Your custom welcome message (Hebrew)
+# Your Hebrew welcome message
 WELCOME_MESSAGE = """ברוכים הבאים 👋
 
 תודה שפנית אלינו!
@@ -38,81 +37,43 @@ WELCOME_MESSAGE = """ברוכים הבאים 👋
 
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle /start command - send welcome message"""
+    """Handle /start command"""
     user = update.effective_user
-    logger.info(f"✅ /start received from User {user.id} ({user.username})")
-    
-    try:
-        await update.message.reply_text(WELCOME_MESSAGE)
-        logger.info(f"✅ Welcome message sent to {user.id}")
-    except Exception as e:
-        logger.error(f"❌ Failed to send message to {user.id}: {e}")
+    logger.info(f"/start from User {user.id} ({user.username})")
+    await update.message.reply_text(WELCOME_MESSAGE)
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle any text message - send welcome message"""
+    """Handle any text message"""
     user = update.effective_user
-    message_text = update.message.text
-    
-    logger.info(f"📩 Message from {user.id}: {message_text[:50]}...")
-    
-    try:
-        await update.message.reply_text(WELCOME_MESSAGE)
-        logger.info(f"✅ Welcome message sent to {user.id}")
-    except Exception as e:
-        logger.error(f"❌ Failed to send message: {e}")
+    logger.info(f"Message from {user.id}: {update.message.text[:30]}...")
+    await update.message.reply_text(WELCOME_MESSAGE)
 
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Log Errors caused by Updates."""
-    logger.error(f"❌ Exception while handling an update: {context.error}")
-    
-    # Log the update that caused the error
-    if isinstance(update, Update):
-        logger.error(f"Update that caused error: {update}")
+    """Log errors"""
+    logger.error(f"Exception: {context.error}")
 
 
 def main() -> None:
     """Start the bot"""
-    # Get token from environment variable
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     
     if not token:
-        logger.error("❌ TELEGRAM_BOT_TOKEN environment variable is not set!")
-        logger.error("Please set your bot token from @BotFather")
+        logger.error("TELEGRAM_BOT_TOKEN not set!")
         sys.exit(1)
     
-    logger.info("🚀 Starting bot...")
-    logger.info(f"Token length: {len(token)} characters")  # Don't log full token!
+    logger.info("Starting bot...")
     
-    try:
-        # Create application with explicit settings for Render
-        application = (
-            Application.builder()
-            .token(token)
-            .read_timeout(10)
-            .get_updates_read_timeout(50)
-            .build()
-        )
-        
-        # Add handlers - ORDER MATTERS!
-        application.add_handler(CommandHandler("start", start_command))
-        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-        
-        # Add error handler
-        application.add_error_handler(error_handler)
-        
-        logger.info("✅ Bot initialized, starting polling...")
-        
-        # Start polling with explicit settings
-        application.run_polling(
-            allowed_updates=Update.ALL_TYPES,
-            drop_pending_updates=True,  # Don't process old messages
-        )
-        
-    except Exception as e:
-        logger.error(f"❌ Fatal error starting bot: {e}")
-        sys.exit(1)
+    application = Application.builder().token(token).build()
+    
+    # Add handlers
+    application.add_handler(CommandHandler("start", start_command))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    application.add_error_handler(error_handler)
+    
+    # Start polling
+    application.run_polling(drop_pending_updates=True)
 
 
 if __name__ == "__main__":
